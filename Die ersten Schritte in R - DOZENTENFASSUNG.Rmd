@@ -1,0 +1,117 @@
+---
+title: "Erste Schritte in R"
+author: "Norman Markgraf"
+date: "1 April 2019"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(mosaic)
+```
+
+## Vorlesung vom 1.4.2019
+
+Diese Datei braucht die Endung ".Rmd", sonst ist das kein R markdown für R Studion, sondern einfach nur eine Textdatei und die R Codeblöcke können nicht ausgeführt werden.
+
+Zu beginn einer jeden Veranstalltung laden wir immer das Paket "Moasic" wie folgt:
+
+```{r}
+library(mosaic)
+```
+
+
+R hat einen Datensatz versteckt, den wir nun "herzaubern":
+
+```{r}
+data("Alcohol")
+```
+
+
+Um sich die ersten Zeilen anzusehen können wir den Befehl 'head()' nutzen:
+
+
+```{r}
+head(Alcohol)
+```
+
+Mit den Befehl 'tail()' dagegen bekopmmt mensch die letzten Zeilen von Alcohol:
+
+```{r}
+tail(Alcohol)
+```
+
+
+Schauen wir uns die von Deutschland gespeicherten Daten an, in dem wir danach "filtern":
+
+```{r}
+Alcohol %>% filter(country == "Germany")
+```
+
+Wir wollen nun nur das Jahr 2008 betrachten und die Spalte "X" stört uns auch und muss weg!
+
+Dazu nutzen wir den Befehl "select()" und speichern das Ergebnis in der Variablen "Alcohol.2008":
+
+```{r}
+Alcohol.2008 <- Alcohol %>%   # Erezuge Tabelle Alcohol.2008 mit Datenquelle Alcohol und dann 
+  filter(year == 2008) %>%    # Filtriere nur das Jahr 2008 UND DANN
+  select(country, alcohol)    # Wähle nur die Spalten country und alcohol
+```
+
+
+```{r}
+Alcohol %>%   # Erezuge Tabelle Alcohol.2008 mit Datenquelle Alcohol und dann 
+  filter(year == 2008) %>%    # Filtriere nur das Jahr 2008 UND DANN
+  select(country, alcohol) -> Alcohol.2008    # Wähle nur die Spalten country und alcohol
+```
+
+
+Wir können einen Datensatz nach jeder Spalte sortieren. Das geht mir dem Befehl "arrange()":
+
+```{r}
+Alcohol.2008.sort <- Alcohol.2008 %>%
+  arrange(alcohol)
+```
+
+
+Wir wollen jeden Land seinen Rang zuweisen. Das geht mit dem Befehl "rank()" und dem Befehl "mutate()":
+
+```{r}
+Alcohol.2008.rank <- Alcohol.2008 %>%
+  mutate(rank = rank(alcohol))
+```
+
+Schauen wir uns nun den Rang von Deutschland an:
+
+```{r}
+Alcohol.2008.rank %>% filter(country == "Germany")
+```
+
+
+Vergleichen wir nun die Länder "Deutschland", "Polen", "Niederlande", "Österreich":
+
+```{r}
+Alcohol.2008.rank %>% 
+  filter(
+    country == "Germany" | 
+    country == "Poland" |
+    country == "Netherlands" |
+    country == "Austria"
+  )
+```
+
+Wie speichert R nun den Datensatz ab?
+
+```{r}
+str(Alcohol)
+```
+
+
+```{r}
+inspect(Alcohol)
+```
+
+
+## Vorlesung vom 13.04.2019
+
+
