@@ -115,3 +115,218 @@ inspect(Alcohol)
 ## Vorlesung vom 13.04.2019
 
 
+Wie immer laden wir zu erst Mosaic:
+
+
+```{r}
+library(mosaic)
+```
+
+Danach wollen wir die tipping Daten aus dem Netz laden:
+
+```{r}
+download.file("https://goo.gl/whKjnl", destfile = "tips.csv")
+```
+Danach laden wir die Daten in den Speicher, genauer in die Variable "tips", mit dem Befehl:
+
+```{r}
+tips <- read.csv2("tips.csv")
+```
+
+
+```{r}
+library(gridExtra)
+```
+
+Wir wollen am Anfang einen Blick auf unsere Daten werfen:
+
+```{r}
+str(tips)
+```
+
+
+Graphische Analyse des Geschlechts der Rechnungszahler*innen:
+
+
+```{r}
+plot1 <- gf_bar( ~ sex, data=tips )
+plot2 <- gf_barh( ~ sex, data=tips )
+grid.arrange(plot1, plot2, nrow=1)
+```
+
+
+Wie hoch ist der Frauenanteil unter den Rechnungszahler*innen?
+
+```{r}
+prop( ~ sex,             # Untersuche das Geschlecht
+     success = "Female", # Nimm nur die Frauen
+     data=tips)          # Nimm den Datensatz tips-
+```
+
+
+Wie sehen die Häufigkeiten in einer Tabelle aus?
+
+Zunächst *absolute* Häufigkeiten
+
+```{r}
+tally( ~ sex, data=tips)
+```
+
+Dann die *relative* Häufigkeiten:
+
+```{r}
+tally( ~ sex, 
+       format = "proportion",
+       data=tips)
+```
+
+Wie sieht das aus zu den beiden Tageszeiten:
+
+```{r}
+gf_bar( ~ sex
+        | time, 
+        data=tips)
+```
+
+Zunächst *absolute* Häufigkeiten
+
+```{r}
+tally( ~ sex 
+      | time, 
+      data=tips)
+```
+
+Dann die *relative* Häufigkeiten:
+
+```{r}
+tally( ~ sex
+       | time, 
+       format = "proportion",
+       data=tips)
+```
+
+```{r}
+tally( ~ sex 
+      | size, 
+      data=tips)
+```
+
+
+## Vorlesung vom 16.4.2019
+
+Wir laden Mosaic und die tipping Daten (nochmal) in den Speicher:
+
+
+```{r}
+library(mosaic)
+tips <- read.csv2("tips.csv")
+```
+
+Wir betrachten den Frauenanteil der Rechnungszahler*innen
+
+```{r}
+tally( ~ sex, data=tips, format = "proportion")
+```
+
+und visualisieren das ganze mit einem Säulendiagramm:
+
+```{r}
+gf_bar( ~ sex, data=tips, format = "proportion")
+```
+
+Wir wollen nun also den Frauenanteil unter der H0 simulieren:
+
+```{r}
+set.seed(2019416)
+
+Nullvtlg <- do(10000) *  # Wiederhole 10.000 mal einen Münzwurf
+  rflip(n=nrow(tips))    # von jeweils genau so vielen Zeilen wie in tips
+```
+
+Und dann visualisieren wir die Verteilung:
+```{r}
+gf_histogram( ~ prop, data=Nullvtlg)
+```
+
+Der beobachtete Frauenanteil in der Stichprobe als Schätzwert für $\pi$.
+
+```{r}
+propdach <- prop( ~ sex, data=tips, success="Female")
+propdach
+```
+
+Die Quantile für extreme Werte in der Verteilun unter der H0 ($pi = 0.5$ und $\alpha = 5\%$):
+
+```{r}
+quantile( ~ prop, data=Nullvtlg, probs = c(0.025, 0.975))
+```
+
+
+
+Der klassiche Test eines Anteilswerts:
+```{r}
+binom.test( ~ sex,
+            p = 0.5,
+            success="Female",
+            alternative = "two.sided",
+            data=tips)
+```
+
+
+
+Deskriptive Ananlyse der Rechnungshöhe:
+
+```{r}
+gf_histogram( ~ total_bill, data=tips)
+```
+
+
+
+```{r}
+favstats( ~ total_bill, data=tips)
+```
+
+Um eine Aussage über die mittlere Rechnungshöhe in der Popilation geben zu können, berechnen wir das Bootstrap-95%-KI:
+
+```{r}
+set.seed(20191604)
+
+Bootvtlg <- do(10000) *
+  mean( ~ total_bill, data=resample(tips))
+```
+
+Wir visualisieren nun die Bootstrap-Verteilun mit Hilfe eines Histogramms:
+
+```{r}
+gf_histogram( ~ mean, data = Bootvtlg)
+```
+
+
+Wir bestimmen nun aus der Bootstrapverteilung das 95%-Bootstrap-KI:
+```{r}
+quantile( ~ mean, data=Bootvtlg, probs= c(0.025, 0.975))
+```
+
+
+
+der klassische Einstichproben-t-Test lautet:
+```{r}
+t.test( ~ total_bill,
+        mu = 15,
+        alternative = "greater",
+        data=tips)
+```
+
+Was passiert mit dem p-Wert, wenn wir statt mit $\mu\leq 15$ mit $\mu \leq 19{,}5$ rechnen?
+
+```{r}
+t.test( ~ total_bill,
+        mu = 19.5,
+        alternative = "greater",
+        data=tips)
+```
+
+
+
+
+
