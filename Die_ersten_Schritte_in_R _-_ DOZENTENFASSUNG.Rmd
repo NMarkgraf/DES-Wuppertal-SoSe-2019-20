@@ -212,9 +212,9 @@ tally( ~ sex
 ```
 
 
-## Vorlesung vom 16.4.2019
+## Vorlesung vom 03.05.2019
 
-Wir laden Mosaic und die tipping Daten (nochmal) in den Speicher:
+Zunächst laden wir, zur Sicherheit, das Paket mosaic und die tipping Daten nach R:
 
 
 ```{r}
@@ -222,111 +222,58 @@ library(mosaic)
 tips <- read.csv2("tips.csv")
 ```
 
-Wir betrachten den Frauenanteil der Rechnungszahler*innen
+
+Einen Boxplot des Rechnungsbetrags erhalten wir mit dem Befehl "gf_boxplot" wie folgt:
 
 ```{r}
-tally( ~ sex, data=tips, format = "proportion")
+gf_boxplot( ~ total_bill, data=tips)
 ```
 
-und visualisieren das ganze mit einem Säulendiagramm:
+Wenn ich das nach dem Rauchstatus gruppiert haben möchte, dann muss man " | smoker " hinter die UV schreiben:
 
 ```{r}
-gf_bar( ~ sex, data=tips, format = "proportion")
+gf_boxplot( ~ total_bill | smoker, data=tips)
 ```
 
-Wir wollen nun also den Frauenanteil unter der H0 simulieren:
+Rechnungshöhe gruppiert nach dem Geschlecht:
 
 ```{r}
-set.seed(2019416)
-
-Nullvtlg <- do(10000) *  # Wiederhole 10.000 mal einen Münzwurf
-  rflip(n=nrow(tips))    # von jeweils genau so vielen Zeilen wie in tips
-```
-
-Und dann visualisieren wir die Verteilung:
-```{r}
-gf_histogram( ~ prop, data=Nullvtlg)
-```
-
-Der beobachtete Frauenanteil in der Stichprobe als Schätzwert für $\pi$.
-
-```{r}
-propdach <- prop( ~ sex, data=tips, success="Female")
-propdach
-```
-
-Die Quantile für extreme Werte in der Verteilun unter der H0 ($pi = 0.5$ und $\alpha = 5\%$):
-
-```{r}
-quantile( ~ prop, data=Nullvtlg, probs = c(0.025, 0.975))
+gf_boxplot( ~ total_bill | sex, data=tips)
 ```
 
 
-
-Der klassiche Test eines Anteilswerts:
 ```{r}
-binom.test( ~ sex,
-            p = 0.5,
-            success="Female",
-            alternative = "two.sided",
-            data=tips)
+favstats( ~ total_bill | sex, data=tips)
+```
+
+## Vorlesung vom 8.5.2019
+
+Zu ersten (nochmals) die Tipping-Daten und das Paket `mosaic` laden:
+
+```{r}
+library(mosaic)
+tips <- read.csv2("tips.csv")
 ```
 
 
+## Offene Übung 54 - Rechnungshöhe für Raucher*innen- bzw. Nichtraucher*innen-Tische
 
-Deskriptive Ananlyse der Rechnungshöhe:
-
-```{r}
-gf_histogram( ~ total_bill, data=tips)
-```
-
-
+Ein Histogramm:
 
 ```{r}
-favstats( ~ total_bill, data=tips)
+gf_histogram(total_bill | smoker, data=tips)
 ```
 
-Um eine Aussage über die mittlere Rechnungshöhe in der Popilation geben zu können, berechnen wir das Bootstrap-95%-KI:
+Ein Boxplot:
 
 ```{r}
-set.seed(20191604)
 
-Bootvtlg <- do(10000) *
-  mean( ~ total_bill, data=resample(tips))
 ```
 
-Wir visualisieren nun die Bootstrap-Verteilun mit Hilfe eines Histogramms:
+Die Kennzahlen:
 
 ```{r}
-gf_histogram( ~ mean, data = Bootvtlg)
+
 ```
-
-
-Wir bestimmen nun aus der Bootstrapverteilung das 95%-Bootstrap-KI:
-```{r}
-quantile( ~ mean, data=Bootvtlg, probs= c(0.025, 0.975))
-```
-
-
-
-der klassische Einstichproben-t-Test lautet:
-```{r}
-t.test( ~ total_bill,
-        mu = 15,
-        alternative = "greater",
-        data=tips)
-```
-
-Was passiert mit dem p-Wert, wenn wir statt mit $\mu\leq 15$ mit $\mu \leq 19{,}5$ rechnen?
-
-```{r}
-t.test( ~ total_bill,
-        mu = 19.5,
-        alternative = "greater",
-        data=tips)
-```
-
-
-
 
 
