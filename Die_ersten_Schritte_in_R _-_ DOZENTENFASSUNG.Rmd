@@ -117,7 +117,6 @@ inspect(Alcohol)
 
 Wie immer laden wir zu erst Mosaic:
 
-
 ```{r}
 library(mosaic)
 ```
@@ -294,4 +293,210 @@ tips %>%
   summarise(cor(tip ~ total_bill))
 ```
 
+
+## Vorlesung vom 15.05.2019
+
+
+Wie immer laden wir zu erst Mosaic:
+
+```{r}
+library(mosaic)
+```
+
+Danach laden wir die Daten in den Speicher, genauer in die Variable "tips", mit dem Befehl:
+
+```{r}
+tips <- read.csv2("tips.csv")
+```
+
+
+Wie simulieren einen Münzwurf:
+
+```{r}
+set.seed(2009)
+muenzwurf <- do(10000) * rflip(n=10)
+```
+
+```{r}
+gf_bar( ~ heads, data=muenzwurf)
+```
+
+
+## Nullverteilung der Stiprobe:
+
+```{r}
+set.seed(2009)
+Nullvtlg <- do(10000) * rflip(n=34, prob=1/3)
+```
+
+
+```{r}
+gf_bar( ~ heads, data= Nullvtlg)
+```
+
+
+
+## Vorlesung vom 25.5.2019
+
+Wie immer laden wir zu erst Mosaic:
+
+```{r}
+library(mosaic)
+```
+
+Danach laden wir die Daten in den Speicher, genauer in die Variable "tips", mit dem Befehl:
+
+```{r}
+tips <- read.csv2("tips.csv")
+```
+
+
+Wie hoch ist der Frauenanteikl unter den Rechnungszahler*innen? (Das ist eine Destriptive Analyse!)
+```{r}
+tally( ~ sex, format = "proportion", data=tips)
+```
+
+Visualisiert:
+```{r}
+gf_bar( ~ sex, data=tips)
+```
+
+Simulation des Frauenanteils unter der $H_0$:
+
+```{r}
+set.seed(2009)
+
+Nullvtlg <- do(10000) * rflip(n = nrow(tips))
+```
+
+```{r}
+gf_histogram( ~ prop, data=Nullvtlg) %>%
+  gf_vline(xintercept = prop( ~ sex, success="Female", data=tips))
+```
+
+Wie ist der p-Wert nun genau?
+```{r}
+propdach <- prop( ~ sex, success="Female", data=tips)
+propdach
+```
+
+Wir bestimmen nun den Annahme- (und damit auch den Ablehn-) Bereich der $H_0$:
+
+```{r}
+quantile( ~ prop, probs=c(0.025, 0.975), data=Nullvtlg)
+```
+
+Unser Punktschätzer liegt also NICHT im Annahmebereich, damit liegt er im Ablehnbereich und die $H_0$ ist daher abzulehnen!
+
+```{r}
+abw.stipro <- abs(propdach - 0.5)
+Nullvtlg <- Nullvtlg %>%
+  mutate(abw = abs(prop - 0.5))
+prop( ~ (abw >= abw.stipro), data = Nullvtlg)
+```
+
+Da der p-Wert ( hier simuliert ) bei 0 liegt und damit unter 5%(=alpha) ist die H_0 (ebenfalls) abzulehnen.
+
+
+
+```{r}
+binom.test( ~ sex,
+            p = 0.5,
+            success = "Female",
+            data=tips)
+```
+
+
+
+## Vorlesung 27.05.2019
+
+Wie immer laden wir zu erst Mosaic:
+
+```{r}
+library(mosaic)
+```
+
+Danach laden wir die Daten in den Speicher, genauer in die Variable "tips", mit dem Befehl:
+
+```{r}
+tips <- read.csv2("tips.csv")
+```
+
+
+```{r}
+erglm4 <- lm( tip ~ total_bill + smoker + total_bill:smoker, data= tips)
+summary(erglm4)
+```
+
+```{r}
+erglm5 <- lm( tip ~ total_bill + smoker + total_bill:smoker + day + total_bill:day, data= tips)
+summary(erglm5)
+```
+
+
+## Datenhandling
+
+Auswählen von Spalten mit dem Befehl `select()`:
+
+```{r}
+tips %>%                       # %>% aka Pipe bedeutet: UND DANN 
+  select(sex, total_bill) %>%  # wähle die Spalten `sex` und `total_bill` aus UND DANN
+  inspect()
+```
+
+
+
+### Lösung zur Aufgabe 139 (Logik):
+
+```{r}
+(TRUE|FALSE) & (FALSE)
+```
+
+### Beobachtungen auswählen mit `filter()`:
+
+Wir wollen nur die Beobachtungen weiterverarbeiten, wo Frauen bezahlt haben (sex=="Female) und der Rechnungsbetrag größer als 20 US-$ war:
+
+```{r}
+tips %>%
+  filter(sex=="Female" & total_bill>20) %>%
+  inspect()
+```
+
+### Übung 141
+
+```{r}
+tips %>%
+  filter(time=="Dinner" & smoker == "Yes") %>%
+  select(tip) %>%
+  inspect()
+```
+
+Wie hoch ist Summe aus Rechnungsbetrag und Trinkgeld?
+
+```{r}
+tips %>%
+  mutate(paid = total_bill + tip) %>%
+  select(paid) %>%
+  inspect()
+
+```
+
+### Übung 142:
+
+```{r}
+tips %>%
+  mutate(rel_tip = tip/total_bill) %>%
+  filter(rel_tip > 0.1) %>%
+  nrow()                                # Wie viele Beobachtungen hat der Datensatz?
+```
+
+
+```{r}
+tips %>%
+  mutate(bill = case_when(total_bill <= 10 ~ "low",
+                          total_bill <= 20 ~ "middle",
+                          total_bill >20   ~ "high")) %>%
+  select(bill) %>%
+  table()
+```
 
