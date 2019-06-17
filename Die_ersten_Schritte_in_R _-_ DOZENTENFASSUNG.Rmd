@@ -407,8 +407,7 @@ binom.test( ~ sex,
 ```
 
 
-
-## Vorlesung 27.05.2019
+## Vorlesung vom 29.5.2019
 
 Wie immer laden wir zu erst Mosaic:
 
@@ -423,80 +422,241 @@ tips <- read.csv2("tips.csv")
 ```
 
 
+Wir erstellen die Bootstrap-Verteilung für den Mittelwert der Rechnungshöhe:
+
 ```{r}
-erglm4 <- lm( tip ~ total_bill + smoker + total_bill:smoker, data= tips)
-summary(erglm4)
+set.seed(2009)
+
+Bootvtlg <- do(10000) *
+  mean( ~ total_bill, data=resample(tips))
 ```
 
-```{r}
-erglm5 <- lm( tip ~ total_bill + smoker + total_bill:smoker + day + total_bill:day, data= tips)
-summary(erglm5)
-```
-
-
-## Datenhandling
-
-Auswählen von Spalten mit dem Befehl `select()`:
+Und dann schauen wir uns das Histogramm dazu an:
 
 ```{r}
-tips %>%                       # %>% aka Pipe bedeutet: UND DANN 
-  select(sex, total_bill) %>%  # wähle die Spalten `sex` und `total_bill` aus UND DANN
-  inspect()
+gf_histogram( ~ mean, data=Bootvtlg)
 ```
 
 
-
-### Lösung zur Aufgabe 139 (Logik):
-
+Bestimmen des 95%-KI:
 ```{r}
-(TRUE|FALSE) & (FALSE)
+quantile( ~ mean, probs=c(0.025,0.975), data=Bootvtlg)
 ```
 
-### Beobachtungen auswählen mit `filter()`:
-
-Wir wollen nur die Beobachtungen weiterverarbeiten, wo Frauen bezahlt haben (sex=="Female) und der Rechnungsbetrag größer als 20 US-$ war:
+### Klassischer t-Test:
 
 ```{r}
-tips %>%
-  filter(sex=="Female" & total_bill>20) %>%
-  inspect()
+t.test( ~ total_bill, mu=15, alternative="greater", data=tips)
 ```
 
-### Übung 141
-
 ```{r}
-tips %>%
-  filter(time=="Dinner" & smoker == "Yes") %>%
-  select(tip) %>%
-  inspect()
+t.test( ~ total_bill, mu=19.5, alternative="greater", data=tips)
 ```
 
-Wie hoch ist Summe aus Rechnungsbetrag und Trinkgeld?
+```{r}
+gf_boxplot( total_bill ~ smoker, data=tips)
+```
 
 ```{r}
-tips %>%
-  mutate(paid = total_bill + tip) %>%
-  select(paid) %>%
-  inspect()
+mean(total_bill ~ smoker, data=tips)
+```
+
+```{r}
+diffmean(total_bill ~ smoker, data=tips)
+```
+
+```{r}
+set.seed(2009)
+Nullvtlg <- do(10000) *
+  diffmean(total_bill ~ shuffle(smoker), data=tips)
+```
+
+```{r}
+gf_histogram(~diffmean, data=Nullvtlg) %>%
+  gf_vline(xintercept = diffmean(total_bill ~ smoker, data=tips), color="red")
+```
+
+```{r}
+quantile( ~ diffmean, probs=c(0.025, 0.975), data=Nullvtlg)
+```
+
+```{r}
+t.test( total_bill ~  smoker, data=tips)
+```
+
+## Vorlesung 08.06.2019
+
+Wie immer laden wir zu erst Mosaic:
+
+```{r}
+library(mosaic)
+```
+
+Danach laden wir die Daten in den Speicher, genauer in die Variable "tips", mit dem Befehl:
+
+```{r}
+tips <- read.csv2("tips.csv")
+```
+
+```{r}
+set.seed(2009)
+
+diff.stipro <- diffprop(sex ~ time, success="Female", data=tips)
+
+Nullvtlg <- do(10000) * diffprop(sex ~ shuffle(time), success="Female", data=tips)
 
 ```
 
-### Übung 142:
+Die Nullverteilung als Histogramm:
 
 ```{r}
-tips %>%
-  mutate(rel_tip = tip/total_bill) %>%
-  filter(rel_tip > 0.1) %>%
-  nrow()                                # Wie viele Beobachtungen hat der Datensatz?
+gf_histogram( ~ diffprop, data=Nullvtlg)
+```
+
+Zeichnen wir den in der Stichprobe gemessenen Wert in das Histogramm:
+
+```{r}
+gf_histogram( ~ diffprop, data=Nullvtlg) %>%
+  gf_vline(xintercept = diff.stipro)
+```
+
+Wir berechnen (zur Sicherheit) einmal den p-Wert:
+```{r}
+abw.stipro <- abs(diff.stipro - 0)
+Nullvtlg %>% mutate(abw = abs(diffprop - 0)) -> Nullvtlg
+prop( ~ abw >= abw.stipro, data = Nullvtlg)
+```
+
+
+
+## Vorlesung vom 17.06.2019
+
+Wie immer laden wir zu erst Mosaic:
+
+```{r}
+library(mosaic)
+```
+
+Danach laden wir die Daten in den Speicher, genauer in die Variable "tips", mit dem Befehl:
+
+```{r}
+tips <- read.csv2("tips.csv")
+```
+
+Schauen wir uns nun den Zusammenhang zwischen dem Trinkgeld und dem Rechnungsbetrag an:
+
+```{r}
+gf_point(tip ~ total_bill, data=tips)
+```
+
+```{r}
+cor(tip ~ total_bill, data=tips)
+```
+
+Es ginge zwar auch so rum:
+
+```{r}
+gf_point(total_bill ~ tip, data=tips)
+```
+
+```{r}
+cor(total_bill ~  tip, data=tips)
+```
+
+ABER: Wir sehen aus inhaltlichen Gründen eher `tip ~ total_bill` !
+
+```{r}
+erglm1 <- lm( tip ~ total_bill, data=tips)
+erglm1
+```
+
+```{r}
+plotModel(erglm1)
 ```
 
 
 ```{r}
-tips %>%
-  mutate(bill = case_when(total_bill <= 10 ~ "low",
-                          total_bill <= 20 ~ "middle",
-                          total_bill >20   ~ "high")) %>%
-  select(bill) %>%
-  table()
+summary(erglm1)
+```
+
+
+```{r}
+predict(erglm1, # Unser Modell
+        newdata= data.frame(total_bill=10), # Unsere neue Beobachtung mit x=10
+        interval = "prediction")
+```
+
+
+### 9.2
+
+```{r}
+do(1) * lm(tip ~ total_bill, data=tips)
+```
+
+
+```{r}
+set.seed(2009)
+do(3) * lm(tip ~ total_bill, data=resample(tips))
+```
+
+Bootstrapping:
+
+```{r}
+set.seed(2009)
+Bootvtlg <- do(10000) * lm(tip ~ total_bill, data=resample(tips))
+```
+
+
+```{r}
+gf_histogram( ~ total_bill, data=Bootvtlg)
+```
+
+Wir schätzen einmal den Standardfehler:
+
+```{r}
+sd( ~ total_bill, data=Bootvtlg)
+```
+
+95%-KI:
+```{r}
+quantile( ~ total_bill, probs=c(0.025, 0.975), data=Bootvtlg)
+```
+
+99%-KI:
+```{r}
+quantile( ~ total_bill, probs=c(0.005, 0.995), data=Bootvtlg)
+```
+
+Darum also bei Ü115 (B), dass KI wird breiter!
+
+90%-KI:
+```{r}
+quantile( ~ total_bill, probs=c(0.05, 0.95), data=Bootvtlg)
+```
+
+
+## Nullverteilung:
+
+```{r}
+do(1) * lm(tip ~ total_bill, data=tips)
+```
+
+
+```{r}
+set.seed(2009)
+do(3) * lm(tip ~ shuffle(total_bill), data=tips)
+```
+```{r}
+set.seed(2009)
+Nullvtlg <- do(10000) * lm(tip ~ shuffle(total_bill), data=tips)
+```
+
+```{r}
+gf_histogram( ~ total_bill, data=Nullvtlg)
+```
+
+```{r}
+gf_histogram( ~ total_bill, data=Nullvtlg) %>%
+  gf_vline(xintercept = 0.105)
 ```
 
